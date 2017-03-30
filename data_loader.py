@@ -1,4 +1,8 @@
 import sqlite3
+import urllib2
+
+import xml.etree.ElementTree as ET
+
 
 API_KEY = "9b35acbf22d3e28bc60bfc68417ed11a"
 SEARCH_METHOD = "flickr.photos.search"
@@ -20,19 +24,26 @@ flickr.photos.getFavorites: https://www.flickr.com/services/api/flickr.photos.ge
 '''
 
 search_key = "art"
+search_url = "https://www.flickr.com/services/rest/?api_key={}&text={}&method={}".format(API_KEY, search_key, SEARCH_METHOD)
 
 sqlite_file = search_key + ".sqlite"
-sql_create_table = "CREATE TABLE FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT)"
+sql_create_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT)"
 
 def flickr_search_load():
 	conn = sqlite3.connect(sqlite_file)
 	with conn:
 		c = conn.cursor()
 		c.execute(sql_create_table)
+		print("Table created")
+
+		response = urllib2.urlopen(search_url).read()
+		#root = ET.parse(response).getroot()
+
+		#print(root.text)
+
 
 		conn.commit()
-		conn.close()
-		print("Table created")
+		#conn.close()
 
 if __name__ == "__main__":
 	flickr_search_load()
