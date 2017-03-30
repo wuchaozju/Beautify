@@ -1,6 +1,8 @@
 import sqlite3
 
 API_KEY = "9b35acbf22d3e28bc60bfc68417ed11a"
+SEARCH_METHOD = "flickr.photos.search"
+FAV_METHOD = "flickr.photos.getFavorites"
 
 '''
 https://www.flickr.com/services/api/flickr.photos.search.html
