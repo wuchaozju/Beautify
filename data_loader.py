@@ -1,12 +1,7 @@
 import sqlite3
 import urllib2
-
+import urllib
 import xml.etree.ElementTree as ET
-
-
-API_KEY = "9b35acbf22d3e28bc60bfc68417ed11a"
-SEARCH_METHOD = "flickr.photos.search"
-FAV_METHOD = "flickr.photos.getFavorites"
 
 '''
 https://www.flickr.com/services/api/flickr.photos.search.html
@@ -24,26 +19,85 @@ flickr.photos.getFavorites: https://www.flickr.com/services/api/flickr.photos.ge
 '''
 
 search_key = "art"
+
+API_KEY = "9b35acbf22d3e28bc60bfc68417ed11a"
+SEARCH_METHOD = "flickr.photos.search"
+FAV_METHOD = "flickr.photos.getFavorites"
+
 search_url = "https://www.flickr.com/services/rest/?api_key={}&text={}&method={}".format(API_KEY, search_key, SEARCH_METHOD)
 
-sqlite_file = search_key + ".sqlite"
+sqlite_file = "data/" + search_key + ".sqlite"
 sql_create_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT)"
 
+'''
+Store all flickr search results into DB
+'''
 def flickr_search_load():
 	conn = sqlite3.connect(sqlite_file)
 	with conn:
+		conn.text_factory = lambda x: unicode(x, 'utf-8', 'ignore')
 		c = conn.cursor()
 		c.execute(sql_create_table)
+		conn.commit()
+
 		print("Table created")
 
 		response = urllib2.urlopen(search_url).read()
-		#root = ET.parse(response).getroot()
+		
+		root = ET.fromstring(response)
+		#print(root)
 
-		#print(root.text)
+		pages = 0
+		for photos in root.findall('photos'):
+			#print photos.attrib
+			pages = int(photos.get('pages'))
 
+		#pages = 3
 
-		conn.commit()
-		#conn.close()
+		for i in range(1, pages + 1):
+			print i
+
+			response = urllib2.urlopen(search_url + "&page=" + str(i)).read()
+			root = ET.fromstring(response)
+
+			for photo in root.iter('photo'):
+				id = photo.get('id')
+				owner = photo.get('owner')
+				secret = photo.get('secret')
+				server = photo.get('server')
+				farm = photo.get('farm')
+				title = photo.get('title')
+				ispublic = int(photo.get('ispublic'))
+				isfriend = int(photo.get('isfriend'))
+				isfamily = int(photo.get('isfamily'))
+
+				title = title.replace("'", "")
+				title = title.replace('"', "")
+
+				# Duplicated records are allowed
+				insert_str = u'INSERT INTO FlickrRecords (id, owner, secret, server, farm, title, ispublic, isfriend, isfamily) VALUES ("{}", "{}", "{}", "{}", "{}", "{}", {}, {}, {})'.format(id, owner, secret, server, farm, title, ispublic, isfriend, isfamily)
+
+				c.execute(insert_str)
+				#print id
+				conn.commit()
+
+		#conn.commit()
+		#sqconn.close()
+
+def download_photos():
+	conn = sqlite3.connect(sqlite_file)
+	with conn:
+		c = conn.cursor()
+		c.execute('SELECT id, farm, server, secret FROM FlickrRecords')
+		all_rows = c.fetchall()
+		for row in all_rows:
+			id = row[0]
+			farm = row[1]
+			server = row[2]
+			secret = row[3]
+			url = u'https://farm{}.staticflickr.com/{}/{}_{}_q.jpg'.format(farm, server, id, secret)
+			urllib.urlretrieve(url, "photo/" + id + ".jpg")
 
 if __name__ == "__main__":
-	flickr_search_load()
+	#flickr_search_load()
+	download_photos()
