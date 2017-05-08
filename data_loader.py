@@ -1,6 +1,6 @@
 import sqlite3
-import urllib2
-import urllib
+import urllib2, urllib
+import time
 import xml.etree.ElementTree as ET
 
 '''
@@ -90,13 +90,22 @@ def download_photos():
 		c = conn.cursor()
 		c.execute('SELECT id, farm, server, secret FROM FlickrRecords')
 		all_rows = c.fetchall()
+		count = 0
+
 		for row in all_rows:
+			count += 1
 			id = row[0]
 			farm = row[1]
 			server = row[2]
 			secret = row[3]
 			url = u'https://farm{}.staticflickr.com/{}/{}_{}_q.jpg'.format(farm, server, id, secret)
 			urllib.urlretrieve(url, "photo/" + id + ".jpg")
+
+			if count % 100 == 0:
+				print count
+
+			if count % 1000 == 0:
+				time.sleep(200)
 
 if __name__ == "__main__":
 	#flickr_search_load()
