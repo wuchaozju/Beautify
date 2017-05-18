@@ -24,7 +24,7 @@ API_KEY = "9b35acbf22d3e28bc60bfc68417ed11a"
 SEARCH_METHOD = "flickr.photos.search"
 FAV_METHOD = "flickr.photos.getFavorites"
 
-search_url = "https://www.flickr.com/services/rest/?api_key={}&text={}&method={}".format(API_KEY, search_key, SEARCH_METHOD)
+search_url = "https://www.flickr.com/services/rest/?api_key={}&per_page=500&text={}&method={}".format(API_KEY, search_key, SEARCH_METHOD)
 
 sqlite_file = "data/" + search_key + ".sqlite"
 sql_create_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT)"
@@ -55,10 +55,9 @@ def flickr_search_load():
 		#pages = 3
 
 		for i in range(1, pages + 1):
-			print i
 
-			if i % 50 == 0:
-				time.sleep(200)
+			if i % 20 == 0:
+				time.sleep(2000)
 				print i
 
 			response = urllib2.urlopen(search_url + "&page=" + str(i)).read()
@@ -112,6 +111,16 @@ def download_photos():
 			if count % 1000 == 0:
 				time.sleep(200)
 
+def test():
+	for i in range(1, 1000):
+		if i % 50 == 0:
+			time.sleep(20)
+			print i
+
 if __name__ == "__main__":
 	flickr_search_load()
 	#download_photos()
+	#test()
+
+
+
