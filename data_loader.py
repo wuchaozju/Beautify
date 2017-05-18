@@ -57,6 +57,10 @@ def flickr_search_load():
 		for i in range(1, pages + 1):
 			print i
 
+			if i % 50 == 0:
+				time.sleep(200)
+				print i
+
 			response = urllib2.urlopen(search_url + "&page=" + str(i)).read()
 			root = ET.fromstring(response)
 
@@ -101,12 +105,13 @@ def download_photos():
 			url = u'https://farm{}.staticflickr.com/{}/{}_{}_q.jpg'.format(farm, server, id, secret)
 			urllib.urlretrieve(url, "photo/" + id + ".jpg")
 
+
 			if count % 100 == 0:
 				print count
-
+				print url
 			if count % 1000 == 0:
 				time.sleep(200)
 
 if __name__ == "__main__":
-	#flickr_search_load()
-	download_photos()
+	flickr_search_load()
+	#download_photos()
