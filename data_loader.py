@@ -27,7 +27,7 @@ FAV_METHOD = "flickr.photos.getFavorites"
 search_url = "https://www.flickr.com/services/rest/?api_key={}&per_page=500&text={}&method={}".format(API_KEY, search_key, SEARCH_METHOD)
 
 sqlite_file = "data/" + search_key + ".sqlite"
-sql_create_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT)"
+sql_create_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT, fetched INT, UNIQUE(Id)) "
 
 '''
 Store all flickr search results into DB
@@ -78,7 +78,7 @@ def flickr_search_load():
 				title = title.replace('"', "")
 
 				# Duplicated records are allowed
-				insert_str = u'INSERT INTO FlickrRecords (id, owner, secret, server, farm, title, ispublic, isfriend, isfamily) VALUES ("{}", "{}", "{}", "{}", "{}", "{}", {}, {}, {})'.format(id, owner, secret, server, farm, title, ispublic, isfriend, isfamily)
+				insert_str = u'INSERT OR IGNORE INTO FlickrRecords (id, owner, secret, server, farm, title, ispublic, isfriend, isfamily, fetched) VALUES ("{}", "{}", "{}", "{}", "{}", "{}", {}, {}, {}, 0)'.format(id, owner, secret, server, farm, title, ispublic, isfriend, isfamily)
 
 				c.execute(insert_str)
 				#print id
