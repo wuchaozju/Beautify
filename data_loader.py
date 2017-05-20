@@ -57,7 +57,7 @@ def flickr_search_load():
 		for i in range(1, pages + 1):
 
 			if i % 20 == 0:
-				time.sleep(2000)
+				time.sleep(20)
 				print i
 
 			response = urllib2.urlopen(search_url + "&page=" + str(i)).read()
