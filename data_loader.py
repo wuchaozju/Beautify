@@ -91,7 +91,7 @@ def download_photos():
 	conn = sqlite3.connect(sqlite_file)
 	with conn:
 		c = conn.cursor()
-		c.execute('SELECT id, farm, server, secret FROM FlickrRecords')
+		c.execute('SELECT id, farm, server, secret FROM FlickrRecords WHERE fetched = 0')
 		all_rows = c.fetchall()
 		count = 0
 
@@ -104,6 +104,9 @@ def download_photos():
 			url = u'https://farm{}.staticflickr.com/{}/{}_{}_q.jpg'.format(farm, server, id, secret)
 			urllib.urlretrieve(url, "photo/" + id + ".jpg")
 
+			update_str = u'UPDATE FlickrRecords SET fetched = 1 WHERE id = {}'.format(id)
+			c.execute(update_str)
+			conn.commit()
 
 			if count % 100 == 0:
 				print count
@@ -118,8 +121,8 @@ def test():
 			print i
 
 if __name__ == "__main__":
-	flickr_search_load()
-	#download_photos()
+	#flickr_search_load()
+	download_photos()
 	#test()
 
 
