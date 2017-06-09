@@ -30,7 +30,7 @@ def clean_images():
 			os.remove(path)
 			continue
 		
-		with scipy.ndimage.imread(path):
+		if os.path.isfile(path):
 			shape = scipy.ndimage.imread(path).shape
 
 			if len(shape) < 3:

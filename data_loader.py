@@ -30,7 +30,7 @@ photo_info_url = "https://www.flickr.com/services/rest/?api_key={}&method={}".fo
 
 sqlite_file = "data/" + search_key + ".sqlite"
 sql_create_photo_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT, fetched INT, UNIQUE(Id)) "
-sql_create_photo_info_table = "CREATE TABLE IF NOT EXISTS PhotoInfos (Id TEXT, view INT, comment INT, , UNIQUE(Id))"
+sql_create_photo_info_table = "CREATE TABLE IF NOT EXISTS PhotoInfos (Id TEXT, view INT, comment INT, dateuploaded TEXT, UNIQUE(Id))"
 
 '''
 Store all flickr search results into DB
@@ -94,14 +94,40 @@ def flickr_search_load():
 def get_photo_popularity(photo_id):
 	response = urllib2.urlopen(photo_info_url + "&photo_id=" + photo_id).read()
 	root = ET.fromstring(response)
+	
+	views = -1
+	comments = -1
 
 	for photo in root.iter('photo'):
 		views = int(photo.get('views'))
-		print views
+		dateuploaded = photo.get('dateuploaded')
 
 		for comment in photo.iter('comments'):
-			print int(comment.text)
-		
+			comments = int(comment.text)
+
+	return dateuploaded, views, comments
+
+def get_all_photo_popularity():
+	conn = sqlite3.connect(sqlite_file)
+	with conn:
+		conn.text_factory = lambda x: unicode(x, 'utf-8', 'ignore')
+
+		c = conn.cursor()
+		c.execute(sql_create_photo_info_table)
+		conn.commit()
+		print("Table created")
+
+		c.execute('SELECT id FROM FlickrRecords')
+		all_rows = c.fetchall()
+
+		for row in all_rows:
+			id = row[0]
+			print id
+			dateuploaded, views, comments = get_photo_popularity(id)
+
+			insert_str = u'INSERT OR IGNORE INTO PhotoInfos (id, view, comment, dateuploaded) VALUES ("{}", "{}", "{}", "{}")'.format(id, views, comments, dateuploaded)
+			c.execute(insert_str)
+			conn.commit()
 
 
 def download_photos():
@@ -147,7 +173,9 @@ if __name__ == "__main__":
 	#download_photos()
 	#test()
 
-	get_photo_popularity("34061715374")
+	#get_photo_popularity("34061715374")
+
+	get_all_photo_popularity()
 
 
 
