@@ -33,6 +33,7 @@ sql_create_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEX
 Store all flickr search results into DB
 '''
 def flickr_search_load():
+
 	conn = sqlite3.connect(sqlite_file)
 	with conn:
 		conn.text_factory = lambda x: unicode(x, 'utf-8', 'ignore')
@@ -121,8 +122,11 @@ def test():
 			print i
 
 if __name__ == "__main__":
-	#flickr_search_load()
-	download_photos()
+	for iter in range(1, 20):
+		print "round " + str(iter)
+		flickr_search_load()
+		time.sleep(6000)
+	#download_photos()
 	#test()
 
 
