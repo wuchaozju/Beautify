@@ -4,7 +4,7 @@ import scipy.ndimage
 from resizeimage import resizeimage
 import math
 
-FileFolder = "photo_sample"
+FileFolder = "photo"
 
 
 def show_image(filename):
