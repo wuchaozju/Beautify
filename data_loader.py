@@ -97,6 +97,7 @@ def get_photo_popularity(photo_id):
 	
 	views = -1
 	comments = -1
+	dateuploaded = ""
 
 	for photo in root.iter('photo'):
 		views = int(photo.get('views'))
@@ -122,7 +123,7 @@ def get_all_photo_popularity():
 
 		for row in all_rows:
 			id = row[0]
-			print id
+			#print id
 			dateuploaded, views, comments = get_photo_popularity(id)
 
 			insert_str = u'INSERT OR IGNORE INTO PhotoInfos (id, view, comment, dateuploaded) VALUES ("{}", "{}", "{}", "{}")'.format(id, views, comments, dateuploaded)
