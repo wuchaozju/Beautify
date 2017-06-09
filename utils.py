@@ -57,8 +57,8 @@ def stat_images():
 			im=Image.open(file)
 			width, height = im.size
 
-			if width < 200 || height <200:
-				os.remove(path)
+			if width < 200 or height <200:
+				os.remove(file)
 				continue
 
 			if min_width > width:
