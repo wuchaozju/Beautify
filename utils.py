@@ -30,9 +30,8 @@ def clean_images():
 			os.remove(path)
 			continue
 		
-		if os.path.isfile(path):
+		try:
 			shape = scipy.ndimage.imread(path).shape
-
 			if len(shape) < 3:
 				os.remove(path)
 				continue
@@ -40,6 +39,9 @@ def clean_images():
 			channel = shape[2]
 			if channel != 3:
 				os.remove(path)
+
+		except IOError:
+			continue
 
 
 def stat_images():
