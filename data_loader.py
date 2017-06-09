@@ -22,12 +22,15 @@ search_key = "art"
 
 API_KEY = "9b35acbf22d3e28bc60bfc68417ed11a"
 SEARCH_METHOD = "flickr.photos.search"
-FAV_METHOD = "flickr.photos.getFavorites"
+INFO_METHOD = "flickr.photos.getInfo"
+#FAV_METHOD = "flickr.photos.getFavorites"
 
 search_url = "https://www.flickr.com/services/rest/?api_key={}&per_page=500&text={}&method={}".format(API_KEY, search_key, SEARCH_METHOD)
+photo_info_url = "https://www.flickr.com/services/rest/?api_key={}&method={}".format(API_KEY, INFO_METHOD)
 
 sqlite_file = "data/" + search_key + ".sqlite"
-sql_create_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT, fetched INT, UNIQUE(Id)) "
+sql_create_photo_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT, fetched INT, UNIQUE(Id)) "
+sql_create_photo_info_table = "CREATE TABLE IF NOT EXISTS PhotoInfos (Id TEXT, view INT, comment INT, , UNIQUE(Id))"
 
 '''
 Store all flickr search results into DB
@@ -38,7 +41,7 @@ def flickr_search_load():
 	with conn:
 		conn.text_factory = lambda x: unicode(x, 'utf-8', 'ignore')
 		c = conn.cursor()
-		c.execute(sql_create_table)
+		c.execute(sql_create_photo_table)
 		conn.commit()
 
 		print("Table created")
@@ -88,6 +91,19 @@ def flickr_search_load():
 		#conn.commit()
 		#sqconn.close()
 
+def get_photo_popularity(photo_id):
+	response = urllib2.urlopen(photo_info_url + "&photo_id=" + photo_id).read()
+	root = ET.fromstring(response)
+
+	for photo in root.iter('photo'):
+		views = int(photo.get('views'))
+		print views
+
+		for comment in photo.iter('comments'):
+			print int(comment.text)
+		
+
+
 def download_photos():
 	conn = sqlite3.connect(sqlite_file)
 	with conn:
@@ -122,12 +138,16 @@ def test():
 			print i
 
 if __name__ == "__main__":
-	for iter in range(1, 20):
-		print "round " + str(iter)
-		flickr_search_load()
-		time.sleep(6000)
+
+	#for iter in range(1, 20):
+	#	print "round " + str(iter)
+	#	flickr_search_load()
+	#	time.sleep(6000)
+
 	#download_photos()
 	#test()
+
+	get_photo_popularity("34061715374")
 
 
 
