@@ -44,6 +44,7 @@ def clean_images():
 			continue
 
 
+
 def stat_images():
 	allfiles = [os.path.join(FileFolder, f) for f in os.listdir(FileFolder) if os.path.isfile(
 		os.path.join(FileFolder + "",f))]
@@ -53,8 +54,12 @@ def stat_images():
 
 	for file in allfiles:
 		try:
-			im=Image.open(filepath)
+			im=Image.open(file)
 			width, height = im.size
+
+			if width < 200 || height <200:
+				os.remove(path)
+				continue
 
 			if min_width > width:
 				min_width = width
