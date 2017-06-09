@@ -30,6 +30,12 @@ def clean_images():
 			os.remove(path)
 			continue
 		
+		shape = scipy.ndimage.imread(path).shape
+
+		if len(shape) < 3:
+			os.remove(path)
+			continue
+
 		channel = scipy.ndimage.imread(path).shape[2]
 		if channel != 3:
 			os.remove(path)
