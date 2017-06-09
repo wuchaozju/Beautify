@@ -54,7 +54,7 @@ def stat_images():
 
 	for file in allfiles:
 		try:
-			im=Image.open(file)
+			im = Image.open(file)
 			width, height = im.size
 
 			if width < 200 or height <200:
@@ -92,9 +92,13 @@ def crop_and_resize(size):
 	for filename in allfiles:
 		path = os.path.join(FileFolder,filename)
 		with open(path, 'r+b'):
-			with Image.open(path) as img:
+
+			try:
+				img = Image.open(path)
 				img = resizeimage.resize_crop(img, [size, size])
 				img.save(os.path.join(FileFolder + "/output",filename), img.format)
+			except IOError:
+				continue 
 
 
 if __name__ == "__main__":
