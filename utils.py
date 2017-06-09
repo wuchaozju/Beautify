@@ -48,8 +48,24 @@ def stat_images():
 	allfiles = [os.path.join(FileFolder, f) for f in os.listdir(FileFolder) if os.path.isfile(
 		os.path.join(FileFolder + "",f))]
 
-	allwidths = [scipy.ndimage.imread(f).shape[0] for f in allfiles]
-	allheights = [scipy.ndimage.imread(f).shape[1] for f in allfiles]
+	min_width = 10000
+	min_height = 10000
+
+	for file in allfiles:
+		try:
+			im=Image.open(filepath)
+			width, height = im.size
+
+			if min_width > width:
+				min_width = width
+			if min_height > height:
+				min_height = height
+
+		except IOError:
+			continue 
+
+	#allwidths = [scipy.ndimage.imread(f).shape[0] for f in allfiles]
+	#allheights = [scipy.ndimage.imread(f).shape[1] for f in allfiles]
 	#allchannels = [scipy.ndimage.imread(f).shape[2] for f in allfiles]
 
 	#print "Max Width: " + str(max(allwidths))
@@ -57,7 +73,10 @@ def stat_images():
 	#print "Max Height: " + str(max(allheights))
 	#print "Min Height: " + str(min(allheights))
 
-	return min(allheights), min(allwidths)
+	#return min(allheights), min(allwidths)
+	print "Min Width: " + str(min_width)
+	print "Min Height: " + str(min_height)
+	return min_width, min_height
 	#print allchannels
 
 
@@ -76,6 +95,6 @@ def crop_and_resize(size):
 if __name__ == "__main__":
 	print "...image utils..."
 
-	clean_images()
+	#clean_images()
 	min_size = int(math.sqrt(min(stat_images())))
 	crop_and_resize(min_size * min_size)
