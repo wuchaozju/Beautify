@@ -3,6 +3,10 @@ import urllib2, urllib
 import time
 import xml.etree.ElementTree as ET
 
+import numpy as np
+import random
+from matplotlib import pyplot as plt
+
 '''
 https://www.flickr.com/services/api/flickr.photos.search.html
 
@@ -31,6 +35,7 @@ photo_info_url = "https://www.flickr.com/services/rest/?api_key={}&method={}".fo
 sqlite_file = "data/" + search_key + ".sqlite"
 sql_create_photo_table = "CREATE TABLE IF NOT EXISTS FlickrRecords (Id TEXT, owner TEXT, secret TEXT, server TEXT, farm TEXT, title TEXT, ispublic INT, isfriend INT, isfamily INT, fetched INT, UNIQUE(Id)) "
 sql_create_photo_info_table = "CREATE TABLE IF NOT EXISTS PhotoInfos (Id TEXT, view INT, comment INT, dateuploaded TEXT, UNIQUE(Id))"
+
 
 '''
 Store all flickr search results into DB
@@ -91,6 +96,7 @@ def flickr_search_load():
 		#conn.commit()
 		#sqconn.close()
 
+
 def get_photo_popularity(photo_id):
 	response = urllib2.urlopen(photo_info_url + "&photo_id=" + photo_id).read()
 	root = ET.fromstring(response)
@@ -108,6 +114,7 @@ def get_photo_popularity(photo_id):
 
 	return dateuploaded, views, comments
 
+
 def get_all_photo_popularity():
 	conn = sqlite3.connect(sqlite_file)
 	with conn:
@@ -118,7 +125,7 @@ def get_all_photo_popularity():
 		conn.commit()
 		print("Table created")
 
-		c.execute('SELECT id FROM FlickrRecords')
+		c.execute('SELECT id FROM FlickrRecords WHERE  id NOT IN (SELECT id FROM PhotoInfos)')
 		all_rows = c.fetchall()
 
 		for row in all_rows:
@@ -158,6 +165,46 @@ def download_photos():
 			if count % 1000 == 0:
 				time.sleep(200)
 
+
+def hist_of_photo_info():
+    conn = sqlite3.connect(sqlite_file)
+    with conn:
+        c = conn.cursor()
+        c.execute('SELECT view, comment, dateuploaded FROM PhotoInfos')
+        all_rows = c.fetchall()
+
+        views = []
+        comments = []
+
+        for row in all_rows:
+            view = row[0]
+            comment = row[1]
+            dateuploaded = row[2]
+
+            #if view > -1 and view < 700:
+            #    views.append(view)
+
+            if comment > 1:
+                print comment
+
+            views.append(view)
+            comments.append(comment) 
+
+        #print min(views)
+        #print max(views)
+ 
+        print np.median(views) #29
+        print np.median(comments) # Most are 0, so use views for measuring popularity
+
+        #data = views   
+        #bins = np.arange(0, 700, 20) # fixed bin size
+
+        #plt.xlim([min(data)-5, max(data)+5])
+        #plt.hist(data, bins=bins, alpha=0.5)
+        #plt.show()
+
+
+
 def test():
 	for i in range(1, 1000):
 		if i % 50 == 0:
@@ -176,7 +223,9 @@ if __name__ == "__main__":
 
 	#get_photo_popularity("34061715374")
 
-	get_all_photo_popularity()
+	#get_all_photo_popularity()
+
+    #hist_of_photo_info()
 
 
 

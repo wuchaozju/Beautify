@@ -9,6 +9,8 @@ import numpy as np
 FileFolder = "photo"
 
 
+
+
 def show_image(filename):
     with Image.open(filename) as img:
         img.show()
