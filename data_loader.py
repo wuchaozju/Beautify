@@ -42,190 +42,240 @@ Store all flickr search results into DB
 '''
 def flickr_search_load():
 
-	conn = sqlite3.connect(sqlite_file)
-	with conn:
-		conn.text_factory = lambda x: unicode(x, 'utf-8', 'ignore')
-		c = conn.cursor()
-		c.execute(sql_create_photo_table)
-		conn.commit()
+    conn = sqlite3.connect(sqlite_file)
+    with conn:
+        conn.text_factory = lambda x: unicode(x, 'utf-8', 'ignore')
+        c = conn.cursor()
+        c.execute(sql_create_photo_table)
+        conn.commit()
 
-		print("Table created")
+        print("Table created")
 
-		response = urllib2.urlopen(search_url).read()
-		
-		root = ET.fromstring(response)
-		#print(root)
+        response = urllib2.urlopen(search_url).read()
+        
+        root = ET.fromstring(response)
+        #print(root)
 
-		pages = 0
-		for photos in root.findall('photos'):
-			#print photos.attrib
-			pages = int(photos.get('pages'))
+        pages = 0
+        for photos in root.findall('photos'):
+            #print photos.attrib
+            pages = int(photos.get('pages'))
 
-		#pages = 3
+        #pages = 3
 
-		for i in range(1, pages + 1):
+        for i in range(1, pages + 1):
 
-			if i % 20 == 0:
-				time.sleep(20)
-				print i
+            if i % 20 == 0:
+                time.sleep(20)
+                print i
 
-			response = urllib2.urlopen(search_url + "&page=" + str(i)).read()
-			root = ET.fromstring(response)
+            response = urllib2.urlopen(search_url + "&page=" + str(i)).read()
+            root = ET.fromstring(response)
 
-			for photo in root.iter('photo'):
-				id = photo.get('id')
-				owner = photo.get('owner')
-				secret = photo.get('secret')
-				server = photo.get('server')
-				farm = photo.get('farm')
-				title = photo.get('title')
-				ispublic = int(photo.get('ispublic'))
-				isfriend = int(photo.get('isfriend'))
-				isfamily = int(photo.get('isfamily'))
+            for photo in root.iter('photo'):
+                id = photo.get('id')
+                owner = photo.get('owner')
+                secret = photo.get('secret')
+                server = photo.get('server')
+                farm = photo.get('farm')
+                title = photo.get('title')
+                ispublic = int(photo.get('ispublic'))
+                isfriend = int(photo.get('isfriend'))
+                isfamily = int(photo.get('isfamily'))
 
-				title = title.replace("'", "")
-				title = title.replace('"', "")
+                title = title.replace("'", "")
+                title = title.replace('"', "")
 
-				# Duplicated records are allowed
-				insert_str = u'INSERT OR IGNORE INTO FlickrRecords (id, owner, secret, server, farm, title, ispublic, isfriend, isfamily, fetched) VALUES ("{}", "{}", "{}", "{}", "{}", "{}", {}, {}, {}, 0)'.format(id, owner, secret, server, farm, title, ispublic, isfriend, isfamily)
+                # Duplicated records are allowed
+                insert_str = u'INSERT OR IGNORE INTO FlickrRecords (id, owner, secret, server, farm, title, ispublic, isfriend, isfamily, fetched) VALUES ("{}", "{}", "{}", "{}", "{}", "{}", {}, {}, {}, 0)'.format(id, owner, secret, server, farm, title, ispublic, isfriend, isfamily)
 
-				c.execute(insert_str)
-				#print id
-				conn.commit()
+                c.execute(insert_str)
+                #print id
+                conn.commit()
 
-		#conn.commit()
-		#sqconn.close()
+        #conn.commit()
+        #sqconn.close()
 
 
 def get_photo_popularity(photo_id):
-	response = urllib2.urlopen(photo_info_url + "&photo_id=" + photo_id).read()
-	root = ET.fromstring(response)
-	
-	views = -1
-	comments = -1
-	dateuploaded = ""
+    response = urllib2.urlopen(photo_info_url + "&photo_id=" + photo_id).read()
+    root = ET.fromstring(response)
+    
+    views = -1
+    comments = -1
+    dateuploaded = ""
 
-	for photo in root.iter('photo'):
-		views = int(photo.get('views'))
-		dateuploaded = photo.get('dateuploaded')
+    for photo in root.iter('photo'):
+        views = int(photo.get('views'))
+        dateuploaded = photo.get('dateuploaded')
 
-		for comment in photo.iter('comments'):
-			comments = int(comment.text)
+        for comment in photo.iter('comments'):
+            comments = int(comment.text)
 
-	return dateuploaded, views, comments
+    return dateuploaded, views, comments
 
 
 def get_all_photo_popularity():
-	conn = sqlite3.connect(sqlite_file)
-	with conn:
-		conn.text_factory = lambda x: unicode(x, 'utf-8', 'ignore')
+    conn = sqlite3.connect(sqlite_file)
+    with conn:
+        conn.text_factory = lambda x: unicode(x, 'utf-8', 'ignore')
 
-		c = conn.cursor()
-		c.execute(sql_create_photo_info_table)
-		conn.commit()
-		print("Table created")
+        c = conn.cursor()
+        c.execute(sql_create_photo_info_table)
+        conn.commit()
+        print("Table created")
 
-		c.execute('SELECT id FROM FlickrRecords WHERE  id NOT IN (SELECT id FROM PhotoInfos)')
-		all_rows = c.fetchall()
+        c.execute('SELECT id FROM FlickrRecords WHERE  id NOT IN (SELECT id FROM PhotoInfos)')
+        all_rows = c.fetchall()
 
-		for row in all_rows:
-			id = row[0]
-			#print id
-			dateuploaded, views, comments = get_photo_popularity(id)
+        for row in all_rows:
+            id = row[0]
+            #print id
+            dateuploaded, views, comments = get_photo_popularity(id)
 
-			insert_str = u'INSERT OR IGNORE INTO PhotoInfos (id, view, comment, dateuploaded) VALUES ("{}", "{}", "{}", "{}")'.format(id, views, comments, dateuploaded)
-			c.execute(insert_str)
-			conn.commit()
+            insert_str = u'INSERT OR IGNORE INTO PhotoInfos (id, view, comment, dateuploaded) VALUES ("{}", "{}", "{}", "{}")'.format(id, views, comments, dateuploaded)
+            c.execute(insert_str)
+            conn.commit()
 
 
-def download_photos():
-	conn = sqlite3.connect(sqlite_file)
-	with conn:
-		c = conn.cursor()
-		c.execute('SELECT id, farm, server, secret FROM FlickrRecords WHERE fetched = 0')
-		all_rows = c.fetchall()
-		count = 0
+def download_photos(id=None, folder="photo/"):
+    conn = sqlite3.connect(sqlite_file)
+    with conn:
+        c = conn.cursor()
+        if id == None:
+            c.execute('SELECT id, farm, server, secret FROM FlickrRecords WHERE fetched = 0')
+        else:
+            c.execute('SELECT id, farm, server, secret FROM FlickrRecords WHERE id = {}'.format(id))
+        
+        all_rows = c.fetchall()
+        count = 0
 
-		for row in all_rows:
-			count += 1
-			id = row[0]
-			farm = row[1]
-			server = row[2]
-			secret = row[3]
-			url = u'https://farm{}.staticflickr.com/{}/{}_{}_q.jpg'.format(farm, server, id, secret)
-			urllib.urlretrieve(url, "photo/" + id + ".jpg")
+        for row in all_rows:
+            count += 1
+            id = row[0]
+            farm = row[1]
+            server = row[2]
+            secret = row[3]
 
-			update_str = u'UPDATE FlickrRecords SET fetched = 1 WHERE id = {}'.format(id)
-			c.execute(update_str)
-			conn.commit()
+            download_photo(farm, server, id, secret, folder)
 
-			if count % 100 == 0:
-				print count
-				print url
-			if count % 1000 == 0:
-				time.sleep(200)
+            update_str = u'UPDATE FlickrRecords SET fetched = 1 WHERE id = {}'.format(id)
+            c.execute(update_str)
+            conn.commit()
+
+            if count % 100 == 0:
+                print count
+                print url
+            if count % 1000 == 0:
+                time.sleep(200)
+
+
+def download_photo(farm, server, id, secret, folder):
+    url = u'https://farm{}.staticflickr.com/{}/{}_{}_q.jpg'.format(farm, server, id, secret)
+    print url
+    urllib.urlretrieve(url, folder + id + ".jpg")
 
 
 def hist_of_photo_info():
     conn = sqlite3.connect(sqlite_file)
     with conn:
         c = conn.cursor()
-        c.execute('SELECT view, comment, dateuploaded FROM PhotoInfos')
+        c.execute('SELECT view, comment, dateuploaded, id FROM PhotoInfos')
         all_rows = c.fetchall()
 
         views = []
         comments = []
+        times = []
+
+
+        #count_small = 0
+        #count_big = 0
 
         for row in all_rows:
+            if row[2] == '':
+                continue
+            dateuploaded = int(row[2])
+            one_year_time = 365.0 * 24 * 60 * 60
+            #times.append(dateuploaded / one_year_time)
+            time_norm = 47.8 - dateuploaded / one_year_time
+            
             view = row[0]
+            view = view / time_norm
+
+            if view > 320:
+                photo_id = row[3]
+                download_photos(photo_id, "good_arts/")
+
+            if view < 25:
+                photo_id = row[3]
+                download_photos(photo_id, "bad_arts/")
+
+            '''
+            if view > 320:
+                count_big += 1
+
+            if view < 25:
+                count_small += 1
+            '''
+
+            
+            '''
+            if view > -1 and view < 700:
+                views.append(view)
+            '''
+            
+
+            '''
             comment = row[1]
-            dateuploaded = row[2]
-
-            #if view > -1 and view < 700:
-            #    views.append(view)
-
             if comment > 1:
-                print comment
-
-            views.append(view)
-            comments.append(comment) 
+                comments.append(comment) 
+            '''
 
         #print min(views)
         #print max(views)
+        #print min(times) #42.90
+        #print max(times) #47.47
+        #print count_big
+        #print count_small
  
-        print np.median(views) #29
-        print np.median(comments) # Most are 0, so use views for measuring popularity
+        #print np.median(views) #29
+        #print np.median(comments) # Most are 0, so use views for measuring popularity
 
-        #data = views   
-        #bins = np.arange(0, 700, 20) # fixed bin size
+        '''
+        data = views   
+        bins = np.arange(0, 700, 20) # fixed bin size
 
-        #plt.xlim([min(data)-5, max(data)+5])
-        #plt.hist(data, bins=bins, alpha=0.5)
-        #plt.show()
+        plt.xlim([min(data)-5, max(data)+5])
+        plt.hist(data, bins=bins, alpha=0.5)
+        plt.show()
+        '''
 
 
 
 def test():
-	for i in range(1, 1000):
-		if i % 50 == 0:
-			time.sleep(20)
-			print i
+    for i in range(1, 1000):
+        if i % 50 == 0:
+            time.sleep(20)
+            print i
+
 
 if __name__ == "__main__":
 
-	#for iter in range(1, 20):
-	#	print "round " + str(iter)
-	#	flickr_search_load()
-	#	time.sleep(6000)
+    #for iter in range(1, 20):
+    #    print "round " + str(iter)
+    #    flickr_search_load()
+    #    time.sleep(6000)
 
-	#download_photos()
-	#test()
+    #download_photos()
+    #test()
 
-	#get_photo_popularity("34061715374")
+    #get_photo_popularity("34061715374")
 
-	#get_all_photo_popularity()
+    #get_all_photo_popularity()
 
-    #hist_of_photo_info()
+    hist_of_photo_info()
+
+    
 
 
 
