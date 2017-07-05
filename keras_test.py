@@ -1,10 +1,3 @@
-'''Trains a simple convnet on the MNIST dataset.
-
-Gets to 99.25% test accuracy after 12 epochs
-(there is still a lot of margin for parameter tuning).
-16 seconds per epoch on a GRID K520 GPU.
-'''
-
 from __future__ import print_function
 import keras
 from keras.models import Sequential
@@ -20,11 +13,30 @@ num_classes = 2
 epochs = 2
 
 def load_data():
+    '''
     batch_files = utils.all_files()
     batch_x = np.asarray([utils.get_image(batch_file) for batch_file in batch_files])
     batch_y = np.asarray([random.randint(0, 1) for batch_file in batch_files])
 
     return (batch_x, batch_y), (batch_x, batch_y)
+    '''
+    good_arts_train = utils.all_files("good_arts")
+    bad_arts_train = utils.all_files("bad_arts")
+
+    good_arts_test = utils.all_files("good_arts_test")
+    bad_arts_test = utils.all_files("bad_arts_test")
+
+    good_train_x = np.asarray([utils.get_image(batch_file) for batch_file in good_arts_train])
+    bad_train_x = np.asarray([utils.get_image(batch_file) for batch_file in bad_arts_train])
+
+    train_x = np.concatenate((good_train_x, bad_train_x))
+
+    train_y = np.concatenate((np.asarray([1 for batch_file in good_arts_train]) ,np.asarray([0 for batch_file in bad_arts_train])))
+
+    test_x = np.concatenate((np.asarray([utils.get_image(batch_file) for batch_file in good_arts_test]), np.asarray([utils.get_image(batch_file) for batch_file in bad_arts_test])))
+    test_y = np.concatenate((np.asarray([1 for batch_file in good_arts_test]),np.asarray([0 for batch_file in bad_arts_test])))
+    
+    return (train_x, train_y), (test_x, test_y)
 
 
 # input image dimensions

@@ -171,9 +171,37 @@ def download_photos(id=None, folder="photo/"):
 
 
 def download_photo(farm, server, id, secret, folder):
-    url = u'https://farm{}.staticflickr.com/{}/{}_{}_q.jpg'.format(farm, server, id, secret)
+    url = u'https://farm{}.staticflickr.com/{}/{}_{}_b.jpg'.format(farm, server, id, secret)
     print url
     urllib.urlretrieve(url, folder + id + ".jpg")
+
+def download_bad_good_photo():
+    good_arts_folder = "good_arts/"
+    bad_arts_folder = "bad_arts/"
+
+    conn = sqlite3.connect(sqlite_file)
+    with conn:
+        c = conn.cursor()
+        c.execute('SELECT view, comment, dateuploaded, id FROM PhotoInfos')
+        all_rows = c.fetchall()
+
+        for row in all_rows:
+            if row[2] == '':
+                continue
+            dateuploaded = int(row[2])
+            one_year_time = 365.0 * 24 * 60 * 60
+            time_norm = 47.8 - dateuploaded / one_year_time
+            
+            view = row[0]
+            view = view / time_norm
+
+            if view > 320:
+                photo_id = row[3]
+                download_photos(photo_id, good_arts_folder)
+
+            if view < 25:
+                photo_id = row[3]
+                download_photos(photo_id, bad_arts_folder)
 
 
 def hist_of_photo_info():
@@ -184,46 +212,25 @@ def hist_of_photo_info():
         all_rows = c.fetchall()
 
         views = []
-        comments = []
-        times = []
-
+        #comments = []
+        #times = []
 
         #count_small = 0
         #count_big = 0
 
-        for row in all_rows:
-            if row[2] == '':
-                continue
-            dateuploaded = int(row[2])
-            one_year_time = 365.0 * 24 * 60 * 60
-            #times.append(dateuploaded / one_year_time)
-            time_norm = 47.8 - dateuploaded / one_year_time
-            
+        for row in all_rows:            
             view = row[0]
-            view = view / time_norm
-
-            if view > 320:
-                photo_id = row[3]
-                download_photos(photo_id, "good_arts/")
-
-            if view < 25:
-                photo_id = row[3]
-                download_photos(photo_id, "bad_arts/")
-
+    
             '''
             if view > 320:
                 count_big += 1
 
             if view < 25:
                 count_small += 1
-            '''
-
+            '''        
             
-            '''
             if view > -1 and view < 700:
                 views.append(view)
-            '''
-            
 
             '''
             comment = row[1]
@@ -240,23 +247,13 @@ def hist_of_photo_info():
  
         #print np.median(views) #29
         #print np.median(comments) # Most are 0, so use views for measuring popularity
-
-        '''
-        data = views   
+        
         bins = np.arange(0, 700, 20) # fixed bin size
 
-        plt.xlim([min(data)-5, max(data)+5])
-        plt.hist(data, bins=bins, alpha=0.5)
+        plt.xlim([min(views)-5, max(views)+5])
+        plt.hist(views, bins=bins, alpha=0.5)
         plt.show()
-        '''
-
-
-
-def test():
-    for i in range(1, 1000):
-        if i % 50 == 0:
-            time.sleep(20)
-            print i
+        
 
 
 if __name__ == "__main__":
@@ -273,7 +270,9 @@ if __name__ == "__main__":
 
     #get_all_photo_popularity()
 
-    hist_of_photo_info()
+    #hist_of_photo_info()
+
+    download_bad_good_photo()
 
     
 

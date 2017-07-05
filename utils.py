@@ -6,10 +6,7 @@ import math
 import scipy.misc
 import numpy as np
 
-FileFolder = "photo"
-
-
-
+FileFolder = "good_arts"
 
 def show_image(filename):
     with Image.open(filename) as img:
@@ -46,7 +43,6 @@ def clean_images():
 
         except IOError:
             continue
-
 
 
 def stat_images():
@@ -96,7 +92,6 @@ def crop_and_resize(size):
     for filename in allfiles:
         path = os.path.join(FileFolder,filename)
         with open(path, 'r+b'):
-
             try:
                 img = Image.open(path)
                 img = resizeimage.resize_crop(img, [size, size])
@@ -112,9 +107,11 @@ def get_image(image_path, grayscale=False):
         return scipy.misc.imread(image_path).astype(np.float)
 
 
-def all_files():
-    return [os.path.join(FileFolder, f) for f in os.listdir(FileFolder) if os.path.isfile(
-        os.path.join(FileFolder,f))]
+def all_files(folder=None):
+    if folder is None:
+        return [os.path.join(FileFolder, f) for f in os.listdir(FileFolder) if os.path.isfile(os.path.join(FileFolder,f))]
+    else:
+        return [os.path.join(folder, f) for f in os.listdir(folder) if os.path.isfile(os.path.join(folder,f))]
 
 if __name__ == "__main__":
     print "...image utils..."
@@ -122,5 +119,5 @@ if __name__ == "__main__":
     clean_images()
     #min_size = int(math.sqrt(min(stat_images())))
     #crop_and_resize(min_size * min_size)
-    crop_and_resize(196)
+    #crop_and_resize(196)
     
